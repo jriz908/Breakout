@@ -1,0 +1,216 @@
+<html>
+
+<head>
+<title>Breakout</title>
+
+
+<script type="text/javascript" src="http://d14to6y4nub5k1.cloudfront.net/local/jquery.min.js"></script>
+<script type="text/javascript" src="http://d14to6y4nub5k1.cloudfront.net/lib/codehs/library_live.js"></script>
+
+
+<style>
+canvas{
+    border: 1px solid black;
+}
+</style>
+
+</head>
+
+<body>
+<h1>Breakout</h1>
+
+<div id="user-code" style="display:none;">
+/* Constants for bricks */
+var NUM_ROWS = 8;
+var BRICK_TOP_OFFSET = 10;
+var BRICK_SPACING = 2;
+var NUM_BRICKS_PER_ROW = 8;
+var BRICK_HEIGHT = 10;
+var SPACE_FOR_BRICKS = getWidth() - (NUM_BRICKS_PER_ROW + 1) * BRICK_SPACING;
+var BRICK_WIDTH = SPACE_FOR_BRICKS / NUM_BRICKS_PER_ROW;
+
+
+/* Constants for ball and paddle */
+var PADDLE_WIDTH = 80;
+var PADDLE_HEIGHT = 15;
+var PADDLE_OFFSET = 10;
+
+var BALL_RADIUS = 15;
+
+var cx = getWidth()/2;
+var cy = getHeight()/2;
+var ball;
+var dx = 5;
+var dy = 5;
+
+var paddle;
+var livesText;
+var lives = 5;
+
+var brickCounter = 0;
+
+function start(){
+    setBackgroundColor(Color.blue);
+    livesText = new Text("Lives " + lives, "30pt Arial");
+    livesText.setPosition(10, getHeight() - 10)
+	livesText.setColor(Color.WHITE);
+    add(livesText);
+    
+    
+    for(var i = 0; i < NUM_ROWS; i++){
+        var colorCode = (i + 9) % 8;
+        var color;
+        
+        if(colorCode == 1 || colorCode == 2){
+            color = Color.RED;
+        }
+        
+        else if(colorCode == 3 || colorCode == 4){
+            color = Color.ORANGE;
+        }
+        
+        else if (colorCode == 5 || colorCode == 6){
+            color = Color.GREEN;
+        }
+        
+        else{
+            color = Color.CYAN;
+        }
+        
+	    drawRow(color, BRICK_TOP_OFFSET + i*(BRICK_HEIGHT + BRICK_SPACING));
+    }    
+    
+	ball = new Circle(BALL_RADIUS);
+	ball.setColor(Color.WHITE);
+	ball.setPosition(cx, cy);
+	add(ball);
+	
+	paddle = new Rectangle(PADDLE_WIDTH, PADDLE_HEIGHT);
+	paddle.setColor(Color.WHITE);
+	paddle.setPosition(cx - PADDLE_WIDTH/2, getHeight() - PADDLE_OFFSET - PADDLE_HEIGHT);
+	add(paddle);
+	
+	setTimer(moveBall, 5);
+	mouseMoveMethod(movePaddle);
+}
+
+function movePaddle(e){
+    if(e.getX() + PADDLE_WIDTH/2 <= getWidth() && e.getX() - PADDLE_WIDTH/2 >= 0){
+        paddle.setPosition(e.getX() - PADDLE_WIDTH/2, paddle.getY());
+    }
+}
+
+function moveBall(){
+    checkWalls();
+    checkCollisions();
+    ball.move(dx, dy);
+}
+
+function checkCollisions(){
+    
+    var element = null;
+    
+    //checking all 4 corners
+    if(getElementAt(ball.getX() - BALL_RADIUS, ball.getY()) != null){
+        element = getElementAt(ball.getX() - BALL_RADIUS, ball.getY());
+    }
+    if(getElementAt(ball.getX() + BALL_RADIUS, ball.getY()) != null){
+        element = getElementAt(ball.getX() + BALL_RADIUS, ball.getY());
+    } 
+    if(getElementAt(ball.getX(), ball.getY() - BALL_RADIUS) != null){
+        element = getElementAt(ball.getX(), ball.getY() - BALL_RADIUS); 
+    }
+    if(getElementAt(ball.getX(), ball.getY() + BALL_RADIUS) != null){
+        element = getElementAt(ball.getX(), ball.getY() + BALL_RADIUS);
+    }
+    
+    if(element != null && element != livesText){
+        if(element != paddle){
+            remove(element);
+            brickCounter--;
+            dy = -dy;
+            
+            if(brickCounter == 0){
+                var win = new Text("You win!", "30pt Arial");
+                win.setPosition(cx - 80, cy - 30)
+                add(win);
+                stopTimer(moveBall);
+                ball.setPosition(-100, -100);
+            }
+        }else{
+            dy = -Math.abs(dy)
+        }
+        
+        
+    }
+}
+
+function checkWalls(){
+    if(ball.getX() - BALL_RADIUS == 0){
+        dx = -dx;
+    }
+    
+    if(ball.getX() + BALL_RADIUS == getWidth()){
+        dx = -dx;
+    }
+    
+    if(ball.getY() - BALL_RADIUS == 0){
+        dy = -dy;
+    }
+    
+    if(ball.getY() == getHeight() + 100){
+        resetBall();
+    }
+    
+}
+
+function resetBall(){
+    lives--;
+    livesText.setText("Lives " + lives);
+    
+    if(lives > 0){
+        ball.setPosition(cx, cy);
+    
+        dx = 5;
+        dy = 5;
+    }else{
+        var gameOver = new Text("Game Over", "30pt Arial");
+        gameOver.setPosition(cx - 100, cy - 30);
+        add(gameOver);
+    }
+    
+}
+
+function drawRow(color, y){
+    for(var i = 0; i < NUM_BRICKS_PER_ROW; i++){
+        drawBrick(color, i * (BRICK_WIDTH + BRICK_SPACING) + BRICK_SPACING, y);
+    }
+}
+
+function drawBrick(color, x, y){
+    var brick = new Rectangle(BRICK_WIDTH, BRICK_HEIGHT);
+    brick.setColor(color);
+    brick.setPosition(x,y);
+    add(brick);
+    
+    brickCounter++;
+}
+
+</div>
+
+<canvas 
+width="500"
+height="600"
+class="codehs-editor-canvas"></canvas>
+
+<script>
+var g = new CodeHSGraphics({
+    canvas: $('.codehs-editor-canvas')
+});
+// run test # here.
+g.runCode($("#user-code").text());
+
+</script>
+
+</body>
+</html>
